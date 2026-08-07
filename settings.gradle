@@ -1,0 +1,21 @@
+// ? Project: Aero Search
+// ? File: settings.gradle
+// ? Directory: /
+// ? Description: Gradle plugin repositories and root project naming.
+// ? Created by: Watty
+// ? Created on: 2026-08-07 14:16 EDT
+// ? Last modified by: Watty
+// ? Last modified on: 2026-08-07 14:16 EDT
+
+pluginManagement {
+    repositories {
+        gradlePluginPortal()
+        maven { url = 'https://maven.neoforged.net/releases' }
+    }
+}
+
+plugins {
+    id 'org.gradle.toolchains.foojay-resolver-convention' version '1.0.0'
+}
+
+rootProject.name = 'AeroSearch'
