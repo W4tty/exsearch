@@ -40,6 +40,14 @@ jobs:
 
           NOTES="Production build for Minecraft Java 1.21.1 / NeoForge 21.1.234 / Java 21. Includes JEI-style Creative search operators, semantic builder filters, fuzzy matching, visual/color indexing, similarity search, palette search, autocomplete, local adaptive ranking, and bundled metadata enrichment."
 
+          # ! Source-code archives on a GitHub release are generated from the tag, not from the release's target_commitish field.
+          # ? Keep v1.0.0 pinned to the exact commit that produced the release JAR so source ZIP/TAR and binary always match.
+          if gh api "repos/${GITHUB_REPOSITORY}/git/ref/tags/v1.0.0" >/dev/null 2>&1; then
+            gh api --method PATCH "repos/${GITHUB_REPOSITORY}/git/refs/tags/v1.0.0" \
+              -f sha="${GITHUB_SHA}" \
+              -F force=true >/dev/null
+          fi
+
           if gh release view v1.0.0 >/dev/null 2>&1; then
             gh release delete-asset v1.0.0 aerosearch-1.0.0.jar --yes || true
             gh release edit v1.0.0 \
