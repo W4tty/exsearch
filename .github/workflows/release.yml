@@ -30,34 +30,24 @@ jobs:
       - name: Build ExSearch
         run: gradle clean build --stacktrace
 
-      - name: Publish and normalize v1.0.0
+      - name: Publish and synchronize v1.1.0
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
-          JAR="$(find build/libs -maxdepth 1 -type f -name 'exsearch-*.jar' ! -name '*-sources.jar' ! -name '*-javadoc.jar' | head -n 1)"
+          VERSION="1.1.0"
+          TAG="v${VERSION}"
+          JAR="$(find build/libs -maxdepth 1 -type f -name "exsearch-${VERSION}.jar" | head -n 1)"
           test -n "$JAR"
 
-          NOTES="Production build for Minecraft Java 1.21.1 / NeoForge 21.1.234 / Java 21. Includes JEI-style Creative search operators, semantic builder filters, fuzzy matching, visual/color indexing, similarity search, palette search, autocomplete, local adaptive ranking, and bundled metadata enrichment."
+          NOTES="ExSearch v1.1.0 adds a real color-theory palette engine. Search installed blocks using auto, monochromatic, analogous, complementary, split-complementary, triadic, tetradic, neutral, or accent harmony modes, then narrow results by builder role such as wall, floor, trim, light, panel, glass, storage, or machine. Harmony ranking uses runtime visual color data plus semantic material/style/use information. Minecraft 1.21.1 / NeoForge 21.1.234 / Java 21."
 
-          # ! Source-code archives on a GitHub release are generated from the tag, not from the release's target_commitish field.
-          # ? Keep v1.0.0 pinned to the exact commit that produced the release JAR so source ZIP/TAR and binary always match.
-          if gh api "repos/${GITHUB_REPOSITORY}/git/ref/tags/v1.0.0" >/dev/null 2>&1; then
-            gh api --method PATCH "repos/${GITHUB_REPOSITORY}/git/refs/tags/v1.0.0" \
-              -f sha="${GITHUB_SHA}" \
-              -F force=true >/dev/null
-          fi
+          git tag -f "$TAG" "$GITHUB_SHA"
+          git push --force origin "refs/tags/$TAG"
 
-          if gh release view v1.0.0 >/dev/null 2>&1; then
-            gh release delete-asset v1.0.0 aerosearch-1.0.0.jar --yes || true
-            gh release edit v1.0.0 \
-              --title "ExSearch v1.0.0" \
-              --notes "$NOTES" \
-              --target "${GITHUB_SHA}"
-            gh release upload v1.0.0 "$JAR" --clobber
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            gh release edit "$TAG" --title "ExSearch v${VERSION}" --notes "$NOTES" --target "$GITHUB_SHA"
+            gh release upload "$TAG" "$JAR" --clobber
           else
-            gh release create v1.0.0 "$JAR" \
-              --target "${GITHUB_SHA}" \
-              --title "ExSearch v1.0.0" \
-              --notes "$NOTES"
+            gh release create "$TAG" "$JAR" --target "$GITHUB_SHA" --title "ExSearch v${VERSION}" --notes "$NOTES"
           fi

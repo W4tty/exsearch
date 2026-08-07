@@ -1,11 +1,11 @@
-// ? Project: Aero Search
+// ? Project: ExSearch
 // ? File: ColorMath.java
-// ? Directory: /src/main/java/gg/theexiles/aerosearch/color
-// ? Description: Named/hex parsing and CIE Lab perceptual color distance.
+// ? Directory: /src/main/java/gg/theexiles/aerosearch
+// ? Description: Named/hex parsing plus perceptual and HSV utilities for color search and harmony ranking.
 // ? Created by: Watty
 // ? Created on: 2026-08-07 14:16 EDT
 // ? Last modified by: Watty
-// ? Last modified on: 2026-08-07 14:16 EDT
+// ? Last modified on: 2026-08-07 16:55 EDT
 
 package gg.theexiles.aerosearch.color;
 
@@ -40,6 +40,37 @@ public final class ColorMath {
         double[] b = lab(rgbB);
         double dl = a[0] - b[0], da = a[1] - b[1], db = a[2] - b[2];
         return Math.sqrt(dl * dl + da * da + db * db);
+    }
+
+    public static double[] hsv(int rgb) {
+        double r = ((rgb >> 16) & 255) / 255.0;
+        double g = ((rgb >> 8) & 255) / 255.0;
+        double b = (rgb & 255) / 255.0;
+        double max = Math.max(r, Math.max(g, b));
+        double min = Math.min(r, Math.min(g, b));
+        double delta = max - min;
+        double hue;
+        if (delta == 0) hue = 0;
+        else if (max == r) hue = 60.0 * (((g - b) / delta) % 6.0);
+        else if (max == g) hue = 60.0 * (((b - r) / delta) + 2.0);
+        else hue = 60.0 * (((r - g) / delta) + 4.0);
+        if (hue < 0) hue += 360.0;
+        double saturation = max == 0 ? 0 : delta / max;
+        return new double[]{hue, saturation, max};
+    }
+
+    public static double hueDistance(double a, double b) {
+        double d = Math.abs(normalizeHue(a) - normalizeHue(b));
+        return Math.min(d, 360.0 - d);
+    }
+
+    public static double normalizeHue(double hue) {
+        double n = hue % 360.0;
+        return n < 0 ? n + 360.0 : n;
+    }
+
+    public static double closeness(double actual, double target, double tolerance) {
+        return Math.max(0.0, 1.0 - hueDistance(actual, target) / Math.max(1.0, tolerance));
     }
 
     public static double[] lab(int rgb) {
