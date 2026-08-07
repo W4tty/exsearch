@@ -1,0 +1,12 @@
+{
+  "schema": 1,
+  "source": "ExilesMC-Platform bundled snapshot",
+  "note": "Curated enrichment. Runtime registry is authoritative.",
+  "entries": {
+    "minecraft:white_concrete": {"styles":["clean","scifi"],"uses":["wall","floor"],"materials":["concrete"],"shapes":["fullblock"],"keywords":["panel","laboratory"]},
+    "minecraft:light_gray_concrete": {"styles":["clean","industrial","scifi"],"uses":["wall","floor"],"materials":["concrete"],"shapes":["fullblock"],"keywords":["panel"]},
+    "minecraft:black_concrete": {"styles":["industrial","scifi","cyberpunk"],"uses":["wall","floor","trim"],"materials":["concrete"],"shapes":["fullblock"]},
+    "minecraft:iron_block": {"styles":["industrial","scifi"],"uses":["wall","machine","trim"],"materials":["metal","iron"],"shapes":["fullblock"]},
+    "minecraft:sea_lantern": {"styles":["clean","scifi"],"uses":["light","ceiling","floor"],"materials":["glass"],"shapes":["fullblock"],"keywords":["cyan","glow"]}
+  }
+}

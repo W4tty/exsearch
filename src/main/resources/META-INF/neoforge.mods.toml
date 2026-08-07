@@ -1,0 +1,28 @@
+modLoader="javafml"
+loaderVersion="[4,)"
+license="All Rights Reserved"
+
+[[mods]]
+modId="aerosearch"
+version="1.0.0"
+displayName="Aero Search"
+authors="Watty"
+description='''Builder-first semantic, color, visual, and JEI-style search for the Minecraft Creative inventory.'''
+displayTest="IGNORE_ALL_VERSION"
+
+[[dependencies.aerosearch]]
+modId="neoforge"
+type="required"
+versionRange="[21.1.0,)"
+ordering="NONE"
+side="CLIENT"
+
+[[dependencies.aerosearch]]
+modId="minecraft"
+type="required"
+versionRange="[1.21.1,1.22)"
+ordering="NONE"
+side="CLIENT"
+
+[[mixins]]
+config="aerosearch.mixins.json"
