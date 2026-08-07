@@ -30,19 +30,26 @@ jobs:
       - name: Build ExSearch
         run: gradle clean build --stacktrace
 
-      - name: Publish v1.0.0
+      - name: Publish and normalize v1.0.0
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
-          JAR="$(find build/libs -maxdepth 1 -type f -name '*.jar' ! -name '*-sources.jar' ! -name '*-javadoc.jar' | head -n 1)"
+          JAR="$(find build/libs -maxdepth 1 -type f -name 'exsearch-*.jar' ! -name '*-sources.jar' ! -name '*-javadoc.jar' | head -n 1)"
           test -n "$JAR"
 
+          NOTES="Production build for Minecraft Java 1.21.1 / NeoForge 21.1.234 / Java 21. Includes JEI-style Creative search operators, semantic builder filters, fuzzy matching, visual/color indexing, similarity search, palette search, autocomplete, local adaptive ranking, and bundled metadata enrichment."
+
           if gh release view v1.0.0 >/dev/null 2>&1; then
+            gh release delete-asset v1.0.0 aerosearch-1.0.0.jar --yes || true
+            gh release edit v1.0.0 \
+              --title "ExSearch v1.0.0" \
+              --notes "$NOTES" \
+              --target "${GITHUB_SHA}"
             gh release upload v1.0.0 "$JAR" --clobber
           else
             gh release create v1.0.0 "$JAR" \
               --target "${GITHUB_SHA}" \
               --title "ExSearch v1.0.0" \
-              --notes "Production build for Minecraft Java 1.21.1 / NeoForge 21.1.234 / Java 21. Includes JEI-style Creative search operators, semantic builder filters, fuzzy matching, visual/color indexing, similarity search, palette search, autocomplete, local adaptive ranking, and bundled metadata enrichment."
+              --notes "$NOTES"
           fi
