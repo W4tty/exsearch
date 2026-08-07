@@ -6,16 +6,14 @@
 ? Created by: Watty
 ? Created on: 2026-08-07 16:33 EDT
 ? Last modified by: Watty
-? Last modified on: 2026-08-07 16:33 EDT
+? Last modified on: 2026-08-07 16:55 EDT
 -->
 
 # ExSearch
 
 **A builder-first Creative inventory search engine for Minecraft Java 1.21.1 / NeoForge.**
 
-ExSearch upgrades Minecraft's normal **Creative → Search Items** tab instead of adding another item browser. It is designed for large modpacks where finding the right block by name alone is not enough.
-
-JEI can remain installed for recipes and usages. ExSearch focuses on finding blocks and items quickly while building.
+ExSearch upgrades Minecraft's normal **Creative → Search Items** tab instead of adding another item browser. JEI can remain installed for recipes and usages; ExSearch focuses on finding the right blocks and items fast in large modpacks.
 
 ## Requirements
 
@@ -26,18 +24,18 @@ JEI can remain installed for recipes and usages. ExSearch focuses on finding blo
 
 ## Installation
 
-1. Download `exsearch-1.0.0.jar` from the GitHub release.
+1. Download `exsearch-1.1.0.jar` from Releases.
 2. Put it in the client's `mods` folder.
-3. Start Minecraft and open Creative inventory → Search Items.
-4. The server does not need ExSearch installed.
+3. Open Creative inventory → Search Items.
+4. The server does not need ExSearch.
 
-## Search examples
+## Core search examples
 
 ```text
 @create
 @create brass pipe
 #create:upright_on_belt
-$tooltip
+$energy
 &create:brass_casing
 color:cyan
 color:#18d7e8
@@ -54,16 +52,62 @@ slab:true
 stairs:true
 wall:true
 emissive:true
-source:vanilla
 source:modded
 @create color:gray shape:panel -copper
 "reinforced glass"
 white futuristic wall panels
-dark industrial floor
-cyan glowing light
 similar:create:brass_casing
 palette:create:brass_casing,minecraft:polished_deepslate
 ```
+
+## Color Theory Palette search
+
+ExSearch 1.1 adds real color-theory harmony ranking based on the **actual rendered color** of the selected block, not only its name. The engine uses HSV hue relationships for harmony logic and CIE Lab/lightness data for perceptual ranking, then mixes in material/style/shape information so the result is useful for building.
+
+Syntax:
+
+```text
+harmony:<mode>:<registry_id>
+```
+
+Examples:
+
+```text
+harmony:auto:create:brass_casing
+harmony:monochromatic:minecraft:cyan_concrete
+harmony:analogous:minecraft:blue_concrete
+harmony:complementary:create:brass_casing
+harmony:split:minecraft:cyan_concrete
+harmony:triadic:minecraft:orange_concrete
+harmony:tetradic:minecraft:purple_concrete
+harmony:neutral:minecraft:red_concrete
+harmony:accent:minecraft:light_gray_concrete
+```
+
+Supported harmony modes:
+
+- **auto** — picks a useful mode automatically; low-saturation seed blocks favor neutral support, saturated blocks favor complementary matching.
+- **monochromatic** — same hue family with useful light/dark variation.
+- **analogous** — neighboring hues around the seed color.
+- **complementary** — approximately 180° opposite on the color wheel.
+- **split complementary** — two colors around the direct complement for softer contrast.
+- **triadic** — roughly 120° / 240° hue relationships.
+- **tetradic** — four-color rectangular harmony.
+- **neutral** — low-saturation supporting whites, grays, blacks, metals and similar blocks.
+- **accent** — stronger high-saturation contrast intended for trim, lighting and detail work.
+
+### Builder roles
+
+Add a role filter to make color theory answer the question you actually have:
+
+```text
+harmony:complementary:create:brass_casing role:floor
+harmony:analogous:minecraft:cyan_concrete role:wall
+harmony:accent:minecraft:white_concrete role:light
+harmony:auto:minecraft:deepslate_tiles role:trim
+```
+
+Supported roles include `any`, `wall`, `floor`, `trim`, `accent`, `light`, `panel`, `glass`, `storage`, and `machine`. Roles use ExSearch's live semantic index, so modded blocks can participate even when they were never manually curated.
 
 ## Search language
 
@@ -82,133 +126,74 @@ palette:create:brass_casing,minecraft:polished_deepslate
 | `hardness:` | Hardness comparison | `hardness:>=3` |
 | `blast:` | Blast resistance comparison | `blast:>6` |
 | `source:` | Vanilla or modded | `source:modded` |
-| `similar:` | Find visually/semantically similar content | `similar:create:brass_casing` |
-| `palette:` | Find blocks that work with selected seeds | `palette:id1,id2` |
-| `-` | Exclude a term/filter | `@create -copper` |
-| `"..."` | Exact phrase token | `"reinforced glass"` |
+| `similar:` | Visual/semantic similarity | `similar:create:brass_casing` |
+| `palette:` | Multi-seed companion palette | `palette:id1,id2` |
+| `harmony:` | Color-theory palette | `harmony:triadic:minecraft:cyan_concrete` |
+| `role:` | Restrict harmony results by build purpose | `role:floor` |
+| `-` | Exclude term/filter | `@create -copper` |
+| `"..."` | Phrase token | `"reinforced glass"` |
 
-Plain text also uses fuzzy matching, so searches do not have to use the advanced syntax.
+Plain words also use fuzzy matching and semantic aliases.
 
-## Builder-oriented search
+## How indexing works
 
-ExSearch automatically classifies installed content into useful concepts such as:
+The live Minecraft item/block registries are always the source of truth. ExSearch scans what is actually installed, then enriches entries with names, namespaces, tags, tooltips, block properties, semantic categories and visual data.
 
-- colors and dominant visual colors
-- metals, stone, glass, wood, concrete, fabric and other materials
-- panels, pipes, ducts, cables, slabs, stairs, walls, doors, lights and full blocks
-- walls, floors, trims, storage, machines and lighting
-- industrial, sci-fi, cyberpunk, clean and weathered/rusty styles
+For usable baked block models, ExSearch samples the currently loaded particle sprite. This means color search and harmony ranking can follow active resource packs. If sprite sampling is unavailable, it falls back to Minecraft map color and semantic inference.
 
-These classifications are inferred at runtime and can be enriched with bundled or local metadata.
+The bundled ExilesMC metadata is an optional enrichment layer only. Minecraft does **not** contact GitHub at runtime, and new or removed mods are discovered locally.
 
-## Color and visual indexing
+## Similarity and palette modes
 
-For blocks with usable baked-model sprites, ExSearch samples the texture currently loaded by Minecraft. This means color search can follow the player's active resource packs rather than relying only on an item's name.
+`similar:<id>` ranks visually and semantically similar blocks using perceptual color, material, shape, style, use and block properties.
 
-Color matching uses perceptual CIE Lab distance instead of simple RGB distance. When visual sampling is unavailable, ExSearch falls back safely to Minecraft map color and semantic inference.
-
-## Similarity search
-
-Use:
-
-```text
-similar:minecraft:iron_block
-```
-
-Similarity ranking combines color, material, shape, use/style categories and relevant block properties. The seed itself is excluded from the results.
-
-Middle-click support in the Creative Search tab can also start a similarity search from the block under the cursor.
-
-## Palette search
-
-Use:
-
-```text
-palette:minecraft:white_concrete,minecraft:iron_block
-```
-
-Palette search looks for useful companion blocks rather than just duplicates. It considers visual contrast, nearby colors, materials, styles and building uses.
-
-Shift + middle-click can add/remove palette seeds while browsing Creative Search.
+`palette:<id,id,...>` finds companion blocks across multiple selected seeds. Color-theory `harmony:` is different: it deliberately targets established color-wheel relationships from one seed block.
 
 ## Autocomplete and controls
 
-- Prefix-aware suggestions for mods, tags, colors, materials, shapes, uses and styles.
+- Prefix-aware suggestions for mods, tags, colors, materials, shapes, uses, styles, harmony modes and roles.
 - `Ctrl + Space` accepts the top suggestion.
 - `F6` rebuilds the runtime search index.
 - `F7` toggles the ExSearch help/suggestion overlay.
-- Search history is retained for the current session.
-
-## Live modpack discovery
-
-ExSearch does **not** require a hardcoded list of installed mods.
-
-The live Minecraft item/block registries are the source of truth. New or removed mods are discovered from the actual client. The bundled ExilesMC metadata is only an enrichment layer and never determines whether an item exists.
-
-This allows ExSearch to work if the ExilesMC pack changes and also makes the core suitable for other NeoForge packs.
-
-## No GitHub/network dependency
-
-Minecraft does not contact GitHub to perform searches or build its index.
-
-ExSearch ships its bundled metadata inside the JAR and supports optional local overrides. Search and learning are local to the client.
+- Middle-click on a Creative Search result starts similarity search.
+- Shift + middle-click adds/removes palette seeds.
 
 ## Local metadata overrides
 
-Curated metadata can be added without recompiling ExSearch:
+Curated metadata can be added without recompiling:
 
 ```text
 config/aerosearch/metadata.json
 ```
 
-Example:
+Runtime registry discovery still wins: metadata cannot make a missing block exist.
 
-```json
-{
-  "schema": 1,
-  "entries": {
-    "create:brass_casing": {
-      "aliases": ["brass panel", "machine wall"],
-      "styles": ["industrial", "scifi"],
-      "uses": ["wall", "machine"],
-      "materials": ["metal", "brass"],
-      "shapes": ["fullblock", "panel"],
-      "keywords": ["factory"],
-      "rankBoost": 1.25,
-      "hidden": false
-    }
-  }
-}
-```
+## Privacy
 
-## Local adaptive ranking
-
-ExSearch can locally boost items selected for repeated searches. This information remains on the client; no telemetry or search history is sent to a service.
-
-## Compatibility philosophy
-
-ExSearch owns non-empty queries in Minecraft's native Creative Search tab. It does not replace JEI's recipe/usage interface and does not require JEI, Searchables, Quark or Inventory Profiles Next.
+Search, visual indexing, metadata merging and adaptive ranking happen locally. ExSearch does not send search history or telemetry to a service.
 
 ## Building from source
-
-Clone the repository and build with Java 21:
 
 ```bash
 gradle clean build
 ```
 
-The production JAR is generated under:
+The JAR is generated in `build/libs/`. GitHub Actions compiles every pushed revision against the NeoForge project configuration.
 
-```text
-build/libs/
-```
+## Release history
 
-GitHub Actions also builds every pushed revision to verify the NeoForge project compiles.
+### v1.1.0
 
-## Project status
+- Added color-theory harmony search.
+- Added auto, monochromatic, analogous, complementary, split-complementary, triadic, tetradic, neutral and accent modes.
+- Added builder-role filtering for walls, floors, trims, accents, lights, panels, glass, storage and machines.
+- Added harmony/role autocomplete.
+- Kept live registry/resource-pack indexing as the source of truth.
 
-`v1.0.0` is the first production build of ExSearch. The project currently targets Minecraft 1.21.1 / NeoForge 21.1.234.
+### v1.0.0
+
+Initial production release with JEI-style prefixes, semantic search, fuzzy matching, visual/color indexing, similarity search, palette search and local adaptive ranking.
 
 ## License
 
-All Rights Reserved unless the repository license is changed in a future release.
+All Rights Reserved unless the repository license changes in a future release.
