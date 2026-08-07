@@ -3,21 +3,21 @@ loaderVersion="[4,)"
 license="All Rights Reserved"
 
 [[mods]]
-modId="aerosearch"
+modId="exsearch"
 version="1.0.0"
-displayName="Aero Search"
+displayName="ExSearch"
 authors="Watty"
 description='''Builder-first semantic, color, visual, and JEI-style search for the Minecraft Creative inventory.'''
 displayTest="IGNORE_ALL_VERSION"
 
-[[dependencies.aerosearch]]
+[[dependencies.exsearch]]
 modId="neoforge"
 type="required"
 versionRange="[21.1.0,)"
 ordering="NONE"
 side="CLIENT"
 
-[[dependencies.aerosearch]]
+[[dependencies.exsearch]]
 modId="minecraft"
 type="required"
 versionRange="[1.21.1,1.22)"
