@@ -1,0 +1,7 @@
+# Build output and Gradle state. The wrapper itself IS tracked: without it the
+# repo cannot be built from a clean clone, which is how it arrived.
+build/
+.gradle/
+runs/
+run/
+*.log

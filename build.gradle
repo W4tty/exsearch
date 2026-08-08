@@ -10,7 +10,7 @@
 plugins {
     id 'java-library'
     id 'maven-publish'
-    id 'net.neoforged.moddev' version '2.0.107'
+    id 'net.neoforged.gradle.userdev' version '7.0.192'
 }
 
 version = mod_version
@@ -22,33 +22,31 @@ base {
 
 java.toolchain.languageVersion = JavaLanguageVersion.of(21)
 
-neoForge {
-    version = neo_version
-
-    runs {
-        client { client() }
-        server { server() }
-        data {
-            data()
-            programArguments.addAll '--mod', mod_id, '--all', '--output', file('src/generated/resources').absolutePath,
-                    '--existing', file('src/main/resources').absolutePath
-        }
+// ! Switched from ModDevGradle to NeoGradle 2026-08-08. MDG could not build on this
+// ! box at 2.0.107 or 2.0.142: NeoFormRuntime fails moving each artifact it writes
+// ! into the shared cache ("being used by another process"), at extractServer then
+// ! rename. Real-time AV holds each new jar during the move and the exclusion needs
+// ! admin nobody has here. NeoGradle does not hit it and is what Exiles-Occupation
+// ! and Exiles-Dependency already use, so all three mods now share one toolchain.
+runs {
+    client {
+        modSource project.sourceSets.main
     }
-
-    mods {
-        "${mod_id}" {
-            sourceSet sourceSets.main
-        }
+    server {
+        modSource project.sourceSets.main
     }
 }
 
 sourceSets.main.resources { srcDir 'src/generated/resources' }
 
 repositories {
+    maven { url = 'https://maven.neoforged.net/releases' }
     mavenCentral()
 }
 
 dependencies {
+    implementation "net.neoforged:neoforge:${neo_version}"
+
     // ! Minecraft 1.21.1 already supplies Gson 2.10.1. Do not pin a conflicting version.
     testImplementation 'org.junit.jupiter:junit-jupiter:5.11.0'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
@@ -56,6 +54,19 @@ dependencies {
 
 test {
     useJUnitPlatform()
+}
+
+// ! neoforge.mods.toml hardcoded its version, so it drifted from gradle.properties:
+// ! the file said 1.1.0 while the shipped jar reported 1.0.0. There was no
+// ! processResources step at all, so nothing substituted it. Scoped with
+// ! filesMatching because expand() runs Groovy templating and would corrupt any
+// ! binary or dollar-bearing resource it touched (this mod ships bundled.json).
+tasks.named('processResources', ProcessResources).configure {
+    def expandProps = [mod_version: mod_version]
+    filesMatching('META-INF/neoforge.mods.toml') {
+        expand expandProps
+    }
+    inputs.properties(expandProps)
 }
 
 tasks.withType(JavaCompile).configureEach {
